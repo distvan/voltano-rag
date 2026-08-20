@@ -25,12 +25,17 @@ UZLETSZABALYZAT_DOCS = {
 }
 COMPANY_TO_DOC = {name: doc for doc, name in UZLETSZABALYZAT_DOCS.items()}
 
-# Company-independent sources: apply to every provider equally (laws + the
-# MEKH-approved Elosztói Szabályzat technical rulebook), so they're always in
-# scope regardless of which DSO (if any) a question names.
+# Company-independent sources: apply to every provider equally (laws, the
+# MEKH-approved Elosztói Szabályzat technical rulebook, and near-verbatim
+# boilerplate the DSOs copy from the same source into their own business
+# rules - e.g. the HMKE 50 kVA definition - deduplicated at ingestion time
+# into this single shared doc so a query naming no provider doesn't get
+# stuck seeing ">1 company" for content that isn't actually company-specific),
+# so they're always in scope regardless of which DSO (if any) a question names.
 LAW_FILES = {"2007_LXXXVI_torveny.md", "273_2007_X_19_korm_rendelet.md"}
 ES_FILE = "mekh_elosztoi_szabalyzat_29_torzs.md"
-COMPANY_INDEPENDENT_DOCS = LAW_FILES | {ES_FILE}
+SHARED_FILE = "kozos_boilerplate_uzletszabalyzat.md"
+COMPANY_INDEPENDENT_DOCS = LAW_FILES | {ES_FILE, SHARED_FILE}
 
 
 def _normalize(s: str) -> str:
