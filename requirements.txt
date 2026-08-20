@@ -1,0 +1,9 @@
+# Serving/backend only - no ingestion dependencies (pdfplumber etc. live in the
+# private ingestion pipeline, not here).
+anthropic
+voyageai
+psycopg[binary]
+pgvector
+fastapi
+uvicorn[standard]
+python-dotenv
