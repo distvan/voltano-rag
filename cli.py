@@ -6,6 +6,13 @@ Usage:
 """
 import sys
 
+# Windows consoles often default to a legacy codepage (e.g. cp1252) that can't
+# encode Hungarian accented characters or the confidence emoji - force UTF-8
+# on stdout/stderr regardless of the host codepage.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 from dotenv import load_dotenv
 
 load_dotenv()
