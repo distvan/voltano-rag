@@ -7,3 +7,4 @@ pgvector
 fastapi
 uvicorn[standard]
 python-dotenv
+streamlit

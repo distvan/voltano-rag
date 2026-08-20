@@ -6,14 +6,15 @@ This repo holds the **data-independent** backend code: given a user question, it
 
 ## Status
 
-Early development. The retrieval and provider-disambiguation approach were prototyped against a Neon/pgvector database populated by a private ingestion pipeline; this repo is the next step: the answer-generation layer (a Claude API call over retrieved context, with a strict "no source → no answer" discipline).
+The answer-generation layer (provider disambiguation + retrieval + a Claude call with a strict "no source → no answer" discipline and a green/yellow/red confidence label) is built and live-tested against a Neon/pgvector database populated by a private ingestion pipeline. A `cli.py` test harness and a `app.py` Streamlit demo both sit on top of the same `src/answer.answer_question()` entry point.
 
 ## Tech stack
 
 - **Python** + the native `anthropic` SDK (no LangChain)
 - **Voyage AI** — query embedding only (document embedding happens in the private ingestion pipeline)
 - **Neon (Postgres + pgvector)** — vector store (read-only from this repo's perspective)
-- **FastAPI** — API layer
+- **Streamlit** — browser demo UI over the same backend logic
+- **FastAPI** — API layer (planned)
 
 ## Environment variables
 
@@ -23,4 +24,14 @@ See [`.env.example`](.env.example). API keys and connection strings are never co
 cp .env.example .env
 # fill in .env, then:
 pip install -r requirements.txt
+```
+
+## Running
+
+```bash
+# CLI
+python cli.py "Mennyi időn belül kell visszakapcsolni a fogyasztót az MVM Démásznál?"
+
+# Browser demo
+streamlit run app.py
 ```
