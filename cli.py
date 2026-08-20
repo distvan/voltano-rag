@@ -35,6 +35,9 @@ def print_result(result) -> None:
         print("\nForrások:")
         for s in result.sources:
             print(f"  - {s}")
+    if result.mszt_hint:
+        print(f"\n📘 Valószínűleg ezt fedi le (nem forrás, csak javaslat): {result.mszt_hint.designation} ({result.mszt_hint.title})")
+        print(f"   Megvásárolható: {result.mszt_hint.url}")
     print()
 
 

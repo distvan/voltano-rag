@@ -24,6 +24,7 @@ from typing import Literal
 
 from . import providers
 from .generation import generate_answer
+from .mszt_hints import StandardHint, suggest_standard
 from .retrieval import search_filtered
 
 
@@ -35,19 +36,28 @@ class AnswerResult:
     confidence: str | None = None
     answer: str | None = None
     sources: list[str] | None = None
+    mszt_hint: StandardHint | None = None
+
+
+def _build_ok_result(query: str, provider: str | None, grounded) -> AnswerResult:
+    # Only offer a paid-standard pointer when we couldn't ground an answer at all -
+    # a green/yellow answer already has a real source, it doesn't need a redirect.
+    hint = suggest_standard(query) if grounded.confidence == "red" else None
+    return AnswerResult(
+        status="ok",
+        provider=provider,
+        confidence=grounded.confidence,
+        answer=grounded.answer,
+        sources=grounded.sources,
+        mszt_hint=hint,
+    )
 
 
 def _answer_for_company(query: str, company: str, k: int) -> AnswerResult:
     allowed_docs = [providers.COMPANY_TO_DOC[company]] + list(providers.COMPANY_INDEPENDENT_DOCS)
     chunks = search_filtered(query, allowed_docs, k)
     grounded = generate_answer(query, chunks, company)
-    return AnswerResult(
-        status="ok",
-        provider=company,
-        confidence=grounded.confidence,
-        answer=grounded.answer,
-        sources=grounded.sources,
-    )
+    return _build_ok_result(query, company, grounded)
 
 
 def answer_question(query: str, k: int = 5, context_provider: str | None = None) -> AnswerResult:
@@ -100,10 +110,4 @@ def answer_question(query: str, k: int = 5, context_provider: str | None = None)
     allowed_docs = list(providers.UZLETSZABALYZAT_DOCS.keys()) + list(providers.COMPANY_INDEPENDENT_DOCS)
     chunks = search_filtered(query, allowed_docs, k)
     grounded = generate_answer(query, chunks, None)
-    return AnswerResult(
-        status="ok",
-        provider=None,
-        confidence=grounded.confidence,
-        answer=grounded.answer,
-        sources=grounded.sources,
-    )
+    return _build_ok_result(query, None, grounded)

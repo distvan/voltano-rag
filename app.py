@@ -25,6 +25,7 @@ EXAMPLE_QUESTIONS = [
     "Mi a szabály az MVM-nél a visszakapcsolásról?",
     "Mekkora teljesítményig számít HMKE-nek egy napelemes rendszer?",
     "Hogyan történik a társasházi energiaközösség HMKE-elszámolása?",
+    "Milyen ÁVK-t kell használni egy elektromos jármű töltőállomás bekötéséhez?",
 ]
 
 NO_CONTEXT = "(nincs kiválasztva - kérdésenként kérdez rá, ha kell)"
@@ -83,5 +84,13 @@ if ask and query.strip():
             with st.expander("Források"):
                 for s in result.sources:
                     st.markdown(f"- {s}")
+        if result.mszt_hint:
+            st.warning(
+                f"📘 Ezt valószínűleg a **{result.mszt_hint.designation}** szabvány "
+                f"szabályozza ({result.mszt_hint.title}) - ez fizetős, a jelenlegi "
+                f"ingyenes forrásokban nincs benne. Nem forrás, csak tájékoztató "
+                f"jellegű javaslat. Megvásárolható: "
+                f"[MSZT szabványértékesítés]({result.mszt_hint.url})"
+            )
 elif ask:
     st.warning("Írj be egy kérdést.")
