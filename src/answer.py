@@ -11,6 +11,13 @@ testing showed that gap does not reliably distinguish a genuinely
 company-agnostic question from a genuinely company-specific one, so a
 silent-wrong-answer risk was traded for one extra clarifying question in the
 rare company-agnostic case.
+
+`context_provider` (2026-08-20 product decision, see the private repo's
+tech-stack-tanulo-projekt.md "Termékdöntés" entry): in the real product the
+DSO should be known from context (set once per job/address), not re-parsed
+from every query. Query-time name recognition (`identify_providers`) stays
+in place as an override only - if the query itself names a company, that
+wins over the context, since the user may be asking about a different site.
 """
 from dataclasses import dataclass
 from typing import Literal
@@ -30,10 +37,28 @@ class AnswerResult:
     sources: list[str] | None = None
 
 
-def answer_question(query: str, k: int = 5) -> AnswerResult:
+def _answer_for_company(query: str, company: str, k: int) -> AnswerResult:
+    allowed_docs = [providers.COMPANY_TO_DOC[company]] + list(providers.COMPANY_INDEPENDENT_DOCS)
+    chunks = search_filtered(query, allowed_docs, k)
+    grounded = generate_answer(query, chunks, company)
+    return AnswerResult(
+        status="ok",
+        provider=company,
+        confidence=grounded.confidence,
+        answer=grounded.answer,
+        sources=grounded.sources,
+    )
+
+
+def answer_question(query: str, k: int = 5, context_provider: str | None = None) -> AnswerResult:
     resolved, ambiguous_candidates = providers.identify_providers(query)
 
     if ambiguous_candidates:
+        # A bare brand mention ("MVM", "E.ON") can't resolve on its own, but if the
+        # active context happens to be one of the candidate entities, that's a real
+        # signal (not a guess) - the user already told us which one they mean.
+        if context_provider in ambiguous_candidates:
+            return _answer_for_company(query, context_provider, k)
         candidates_str = " vagy ".join(sorted(ambiguous_candidates))
         return AnswerResult(
             status="needs_clarification",
@@ -47,23 +72,20 @@ def answer_question(query: str, k: int = 5) -> AnswerResult:
         )
 
     if len(resolved) == 1:
-        company = next(iter(resolved))
-        allowed_docs = [providers.COMPANY_TO_DOC[company]] + list(providers.COMPANY_INDEPENDENT_DOCS)
-        chunks = search_filtered(query, allowed_docs, k)
-        grounded = generate_answer(query, chunks, company)
-        return AnswerResult(
-            status="ok",
-            provider=company,
-            confidence=grounded.confidence,
-            answer=grounded.answer,
-            sources=grounded.sources,
-        )
+        # An explicit company name in the query always overrides the active context -
+        # the user may be asking about a different job/site than the current one.
+        return _answer_for_company(query, next(iter(resolved)), k)
 
-    # No provider named. Decide company-dependence with a search scoped ONLY to
-    # the 6 company docs (not mixed with company-independent sources) - a mixed
-    # pool is unreliable here because the more concentrated company-independent
-    # content can crowd companies out of the top-k even when the question is
-    # genuinely company-specific.
+    # No provider named in the query. If a context is set, use it directly - no need
+    # to guess from retrieval at all.
+    if context_provider:
+        return _answer_for_company(query, context_provider, k)
+
+    # No context either. Decide company-dependence with a search scoped ONLY to the
+    # 6 company docs (not mixed with company-independent sources) - a mixed pool is
+    # unreliable here because the more concentrated company-independent content can
+    # crowd companies out of the top-k even when the question is genuinely
+    # company-specific.
     company_chunks = search_filtered(query, list(providers.UZLETSZABALYZAT_DOCS.keys()), k)
     companies_present = {providers.UZLETSZABALYZAT_DOCS[c.source_doc] for c in company_chunks}
 
