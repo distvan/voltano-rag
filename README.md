@@ -1,3 +1,13 @@
+---
+title: Voltano RAG Demo
+emoji: ⚡
+colorFrom: blue
+colorTo: yellow
+sdk: streamlit
+app_file: app.py
+pinned: false
+---
+
 # Voltano RAG
 
 Backend / query & answer-generation layer for "Voltano" (working title) — an AI assistant for Hungarian electricians.
@@ -35,3 +45,12 @@ python cli.py "Mennyi időn belül kell visszakapcsolni a fogyasztót az MVM Dé
 # Browser demo
 streamlit run app.py
 ```
+
+## Deploying the demo (Hugging Face Spaces)
+
+This repo is set up to run directly as a Streamlit-SDK Space (see the YAML block at the top of this file). Hugging Face Spaces injects secrets as regular environment variables, so no bridge code is needed - the app reads them via `os.environ` exactly like a local `.env` run.
+
+1. Create a new Space at [huggingface.co/new-space](https://huggingface.co/new-space), SDK = **Streamlit**.
+2. Either connect this GitHub repo, or push this repo's contents to the Space's own git remote.
+3. In the Space's **Settings → Variables and secrets**, add the same three keys as `.env.example`: `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `NEON_DATABASE_URL` (as secrets, not public variables).
+4. The Space builds from `requirements.txt` and runs `app.py` automatically. Future pushes redeploy it.
