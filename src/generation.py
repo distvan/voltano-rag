@@ -4,6 +4,19 @@ Core discipline (ported from the private repo's design principles): "no source
 -> no answer" and a three-tier confidence label rather than a single
 confident-sounding answer, since a wrong-but-fluent answer is worse for a
 practicing electrician than a visible "not sure."
+
+Model choice (2026-08-21): claude-sonnet-5, not claude-opus-5. Live A/B/C
+tested (Opus 5 vs Sonnet 5 vs Haiku 4.5) across the validated 9-query test
+set (mirrors the private repo notebook's TEST_QUERIES): Sonnet 5 matched
+Opus 5's confidence-tier decision on every single case that reached
+generation, including the two hard ones (a mixed-audience answer that
+should be "yellow" not "green", and an Elosztói Szabályzat-sourced answer)
+- at roughly 1/3 the cost. Haiku 4.5 was cheaper still (~1/9-1/11) but
+failed outright (invalid structured-output JSON) on the harder ES case and
+mislabeled the yellow case as green - a real reliability gap in exactly the
+confidence signal this product's trust model depends on, not worth the
+extra savings at this stage. Re-run the same comparison before considering
+Haiku again, and don't swap models based on a small sample without doing so.
 """
 import os
 from typing import Literal
@@ -13,7 +26,7 @@ from pydantic import BaseModel
 
 from .retrieval import Chunk
 
-MODEL = "claude-opus-5"
+MODEL = "claude-sonnet-5"
 
 SYSTEM_PROMPT = """\
 Magyar villanyszerelőknek segítesz kérdéseket megválaszolni elosztói \
